@@ -113,6 +113,62 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        board.setViewingPerspective(side);
+        int size = board.size();
+        for (int col = 0; col < size; col++) {
+            for (int row = size - 1; row >= 0; row--) {
+                // Fill Null
+                Tile t = board.tile(col, row);
+                if (t != null) {
+                    // find nextPos which is null
+                    int nextPos = 3;
+                    while (nextPos >= row) {
+                        if (board.tile(col, nextPos) == null) {
+                            break;
+                        }
+                        nextPos--;
+                    }
+                    // check if nextPos is a legal position
+                    if (nextPos >= row) {
+                        board.move(col, nextPos, t);
+                        changed = true;
+                    }
+                }
+            }
+            // merge
+            for (int row = size - 1; row >= 0; row--) {
+                Tile curtile = board.tile(col, row);
+                int NextTile = row - 1;
+                if (NextTile < 0) {
+                    break;
+                }
+                Tile nexttile = board.tile(col, NextTile);
+                if (curtile == null || nexttile == null) {
+                    break;
+                }
+                if (nexttile.value() == curtile.value()) {
+                    board.move(col, row, nexttile);
+                    score += nexttile.value() * 2;
+                    for (int p = row - 2; p >= 0; p--) {
+                        Tile tt = board.tile(col, p);
+                        if (tt == null) {
+                            break;
+                        }
+                        if (p < board.size()-1) {
+                            board.move(col, p + 1, tt);
+                        }
+                    }
+                    changed = true;
+                }
+            }
+        }
+        board.setViewingPerspective(Side.NORTH);
+
+
+
+
+
+
 
         checkGameOver();
         if (changed) {
@@ -138,6 +194,13 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        for (int i = 0; i < b.size(); i += 1) {
+            for (int j = 0; j < b.size(); j += 1) {
+                if (b.tile(i, j) == null) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -148,8 +211,19 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        int size = b.size();
+        for (int col = 0; col < size; col++) {
+            for (int row = 0; row < size; row++) {
+                Tile t = b.tile(col, row);
+                // only when t != null should we check t.value()
+                if (t != null && t.value() == MAX_PIECE) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
+
 
     /**
      * Returns true if there are any valid moves on the board.
@@ -159,6 +233,28 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        if (emptySpaceExists(b)) {
+            return true;
+        }
+        int dx [] = {0, -1, 0, 1};
+        int dy [] = {1, 0, -1, 0};
+        for (int col = 0; col < b.size(); col += 1) {
+            for (int row = 0; row < b.size(); row += 1) {
+                Tile origin = b.tile(col, row);
+                int originV = origin.value();
+                for (int incre = 0; incre < 4; incre += 1) {
+                    int colnew = col + dx[incre];
+                    int rownew = row + dy[incre];
+                    if (colnew >= 0 && colnew < b.size() && rownew >=0 && rownew < b.size()) {
+                        Tile modify = b.tile(colnew,rownew);
+                        int modifyV = modify.value();
+                        if (modifyV == originV) {
+                            return true;
+                        }
+                    }
+                    }
+                }
+            }
         return false;
     }
 
